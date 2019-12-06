@@ -6,6 +6,8 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.kedacom.ctsp.webssh.JsonUtil;
 import com.kedacom.ctsp.webssh.model.HostLoginInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.websocket.*;
@@ -22,6 +24,7 @@ import java.util.concurrent.atomic.LongAdder;
 @Component
 public class WebSshHandler {
 
+    static final Logger LOG = LoggerFactory.getLogger(WebSshHandler.class);
 
     public static LongAdder onlineCount = new LongAdder();
 

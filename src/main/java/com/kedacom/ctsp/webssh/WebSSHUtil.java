@@ -10,12 +10,8 @@ import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
 
-public final class JsonUtil {
-    private static final Log LOGGER = LogFactory.getLog(JsonUtil.class);
-
-    private JsonUtil() {
-
-    }
+public class WebSSHUtil {
+    private static final Log LOGGER = LogFactory.getLog(WebSSHUtil.class);
 
     public static <T> String objectToJson(T obj) {
         ObjectMapper mapper = new ObjectMapper();

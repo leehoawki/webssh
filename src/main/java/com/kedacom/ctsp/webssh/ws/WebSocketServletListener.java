@@ -1,5 +1,8 @@
 package com.kedacom.ctsp.webssh.ws;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.servlet.ServletRequestEvent;
 import javax.servlet.ServletRequestListener;
 import javax.servlet.annotation.WebListener;
@@ -8,6 +11,8 @@ import javax.servlet.http.HttpSession;
 
 @WebListener()
 public class WebSocketServletListener implements ServletRequestListener {
+
+    static final Logger LOG = LoggerFactory.getLogger(WebSocketServletListener.class);
     @Override
     public void requestDestroyed(ServletRequestEvent servletRequestEvent) {
 
