@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
-import com.kedacom.ctsp.webssh.JsonUtil;
-import com.kedacom.ctsp.webssh.model.HostLoginInfo;
+import com.kedacom.ctsp.webssh.WebSSHUtil;
+import com.kedacom.ctsp.webssh.hosts.HostLoginInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.LongAdder;
 
-@ServerEndpoint(value = "/ssh/{id}", configurator = WebSocketConfigrator.class)
+@ServerEndpoint(value = "/ws/{id}", configurator = WebSocketConfigrator.class)
 @Component
 public class WebSshHandler {
 
@@ -38,7 +38,6 @@ public class WebSshHandler {
 
     private StringBuilder dataToDst = new StringBuilder();
 
-
     private static JSch jsch = new JSch();
 
     private com.jcraft.jsch.Session jschSession;
@@ -54,11 +53,12 @@ public class WebSshHandler {
     @OnOpen
     public void onOpen(final Session session, @PathParam("id") Long id) throws JSchException, IOException, EncodeException, InterruptedException {
         this.session = session;
+        LOG.info("session open, id=" + id + ", properties=" + session.getUserProperties());
         webSocketSet.add(this);
         onlineCount.increment();
-        System.out.println("有新链接 " + session.getUserProperties().get("ClientIP") + " 加入!当前在线人数为" + onlineCount.longValue());
 
         HostLoginInfo hostLoginInfo = hostLoginInfoMap.get(id);
+        LOG.info("hostinfo binding, host=" + hostLoginInfo);
 
         jschSession = jsch.getSession(hostLoginInfo.getUsername(), hostLoginInfo.getHostname(), hostLoginInfo.getPort());
         jschSession.setPassword(hostLoginInfo.getPassword());
@@ -75,10 +75,8 @@ public class WebSshHandler {
 
 
         thread = new Thread() {
-
             @Override
             public void run() {
-
                 try {
                     BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
                     String msg = "";
@@ -130,7 +128,6 @@ public class WebSshHandler {
         webSocketSet.remove(this);
         onlineCount.decrement();
         System.out.println("有一链接关闭! 当前在线人数为" + onlineCount.longValue());
-
         channel.disconnect();
         jschSession.disconnect();
     }
@@ -141,7 +138,7 @@ public class WebSshHandler {
 
         System.out.println("来自客户端 " + session.getUserProperties().get("ClientIP") + " 的消息:" + message);
 
-        JsonNode node = JsonUtil.strToJsonObject(message);
+        JsonNode node = WebSSHUtil.strToJsonObject(message);
 
         if (node.has("resize")) {
             // do nothing

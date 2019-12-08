@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
-import com.kedacom.ctsp.webssh.model.HostLoginInfo;
+import com.kedacom.ctsp.webssh.hosts.HostLoginInfo;
 import com.kedacom.ctsp.webssh.ws.WebSshHandler;
 
 @Controller
@@ -20,7 +20,6 @@ public class WebSshController {
     @RequestMapping(value = "/", method = RequestMethod.POST)
     @ResponseBody
     public ObjectNode connect(String hostname, Integer port, String username, String password, MultipartFile privatekey) {
-
         WebSshHandler.websocketSessionId.increment();
         long wsId = WebSshHandler.websocketSessionId.longValue();
 

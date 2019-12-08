@@ -5,21 +5,20 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
 public class WebSSHUtil {
-    private static final Log LOGGER = LogFactory.getLog(WebSSHUtil.class);
+    private static final Logger LOG = LoggerFactory.getLogger(WebSSHUtil.class);
 
     public static <T> String objectToJson(T obj) {
         ObjectMapper mapper = new ObjectMapper();
         try {
             return mapper.writeValueAsString(obj);
         } catch (JsonProcessingException e) {
-            LOGGER.error(e);
-            return null;
+            throw new IllegalArgumentException(e);
         }
     }
 
@@ -28,8 +27,7 @@ public class WebSSHUtil {
         try {
             return mapper.readTree(data);
         } catch (IOException e) {
-            LOGGER.error(e);
-            return null;
+            throw new IllegalArgumentException(e);
         }
     }
 

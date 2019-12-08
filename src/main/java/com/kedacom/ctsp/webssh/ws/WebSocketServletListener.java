@@ -13,6 +13,7 @@ import javax.servlet.http.HttpSession;
 public class WebSocketServletListener implements ServletRequestListener {
 
     static final Logger LOG = LoggerFactory.getLogger(WebSocketServletListener.class);
+
     @Override
     public void requestDestroyed(ServletRequestEvent servletRequestEvent) {
 
@@ -22,7 +23,7 @@ public class WebSocketServletListener implements ServletRequestListener {
     public void requestInitialized(ServletRequestEvent servletRequestEvent) {
         HttpServletRequest request = (HttpServletRequest) servletRequestEvent.getServletRequest();
         HttpSession session = request.getSession();
-        // 把HttpServletRequest中的IP地址放入HttpSession中，关键字可任取，此处为ClientIP
-        session.setAttribute("ClientIP", servletRequestEvent.getServletRequest().getRemoteAddr());
+        LOG.info("client ip accquired, ip=" + servletRequestEvent.getServletRequest().getRemoteAddr());
+        session.setAttribute("client_ip", servletRequestEvent.getServletRequest().getRemoteAddr());
     }
 }

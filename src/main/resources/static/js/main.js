@@ -353,9 +353,9 @@ jQuery(function($){
       return;
     }
 
-    var ws_url = window.location.href.split(/\?|#/, 1)[0].replace('http', 'ws'),
+    var ws_url = window.location.origin.split(/\?|#/, 1)[0].replace('http', 'ws'),
         join = (ws_url[ws_url.length-1] === '/' ? '' : '/'),
-        url = ws_url + join + 'ws?id=' + msg.id,
+        url = ws_url + join + 'ws/' + msg.id,
         sock = new window.WebSocket(url),
         encoding = 'utf-8',
         decoder = window.TextDecoder ? new window.TextDecoder(encoding) : encoding,
@@ -367,7 +367,6 @@ jQuery(function($){
           }
         });
 
-    console.log(url);
     if (!msg.encoding) {
       console.log('Unable to detect the default encoding of your server');
       msg.encoding = encoding;

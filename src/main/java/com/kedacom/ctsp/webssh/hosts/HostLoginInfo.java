@@ -1,4 +1,4 @@
-package com.kedacom.ctsp.webssh.model;
+package com.kedacom.ctsp.webssh.hosts;
 
 
 import org.springframework.web.multipart.MultipartFile;
