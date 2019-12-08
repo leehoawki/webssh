@@ -107,8 +107,8 @@ public class WebSshHandler {
 
                         dataToDst = new StringBuilder();
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
+                } catch (Exception e) {
+                    LOG.error("", e);
                 }
             }
         };
@@ -123,8 +123,12 @@ public class WebSshHandler {
         webSocketSet.remove(this);
         onlineCount.decrement();
         LOG.info("session closed, session=" + this.session);
-        channel.disconnect();
-        jschSession.disconnect();
+        if (channel != null) {
+            channel.disconnect();
+        }
+        if (jschSession != null) {
+            jschSession.disconnect();
+        }
     }
 
     @OnMessage
