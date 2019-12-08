@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.LongAdder;
 
-@ServerEndpoint(value = "/ws/{id}", configurator = WebSocketConfigrator.class)
+@ServerEndpoint(value = "/ws/{id}")
 @Component
 public class WebSshHandler {
 
@@ -73,7 +73,6 @@ public class WebSshHandler {
         outputStream = channel.getOutputStream();
         channel.connect();
 
-
         thread = new Thread() {
             @Override
             public void run() {
@@ -82,9 +81,7 @@ public class WebSshHandler {
                     String msg = "";
                     String preMsg = "";
                     while ((msg = bufferedReader.readLine()) != null) { // 这里会阻塞，所以必须起线程来读取channel返回内容
-
                         msg = "\r\n" + msg;
-
                         if (preMsg.equals(msg)) { // 直接回车
                             byte[] bytes = msg.getBytes();
                             ByteBuffer byteBuffer = ByteBuffer.wrap(bytes, 0, bytes.length);
@@ -101,7 +98,6 @@ public class WebSshHandler {
                         }
 
                         preMsg = msg;
-
                         System.out.println("<<" + msg + ">>");
                         byte[] bytes = msg.getBytes();
                         ByteBuffer byteBuffer = ByteBuffer.wrap(bytes, 0, bytes.length);
@@ -120,34 +116,28 @@ public class WebSshHandler {
 
         Thread.sleep(100);
         this.onMessage("{\"data\":\"\\r\"}", this.session);
-
     }
 
     @OnClose
     public void onClose() {
         webSocketSet.remove(this);
         onlineCount.decrement();
-        System.out.println("有一链接关闭! 当前在线人数为" + onlineCount.longValue());
+        LOG.info("session closed, session=" + this.session);
         channel.disconnect();
         jschSession.disconnect();
     }
 
     @OnMessage
     public void onMessage(String message, Session session) throws IOException, JSchException {
-
-
-        System.out.println("来自客户端 " + session.getUserProperties().get("ClientIP") + " 的消息:" + message);
-
+        LOG.debug("message received, message=" + message);
         JsonNode node = WebSSHUtil.strToJsonObject(message);
 
         if (node.has("resize")) {
-            // do nothing
             return;
         }
 
         if (node.has("data")) {
             String str = node.get("data").asText();
-
             if ("\r".equals(str)) {
                 if (dataToDst.length() > 0) {
                     str = "\r\n";
@@ -167,12 +157,8 @@ public class WebSshHandler {
                     session.getBasicRemote().sendBinary(byteBuffer);
                 }
             }
-
             System.out.println("dataToDst = " + dataToDst);
-
             return;
         }
-
-
     }
 }
