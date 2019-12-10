@@ -81,7 +81,7 @@ public class WebSshHandler {
                     String msg = "";
                     String preMsg = "";
                     while ((msg = bufferedReader.readLine()) != null) {
-                        LOG.debug("message received <<" + msg + ">>");
+                        LOG.debug("message received, line=" + msg);
                         msg = "\r\n" + msg;
                         if (preMsg.equals(msg)) {
                             byte[] bytes = msg.getBytes();
@@ -108,7 +108,7 @@ public class WebSshHandler {
                         dataToDst = new StringBuilder();
                     }
                 } catch (Exception e) {
-                    LOG.error("", e);
+                    LOG.error("communication error", e);
                 }
             }
         };
