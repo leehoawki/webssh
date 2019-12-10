@@ -80,16 +80,17 @@ public class WebSshHandler {
                     BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
                     String msg = "";
                     String preMsg = "";
-                    while ((msg = bufferedReader.readLine()) != null) { // 这里会阻塞，所以必须起线程来读取channel返回内容
+                    while ((msg = bufferedReader.readLine()) != null) {
+                        LOG.debug("message received <<" + msg + ">>");
                         msg = "\r\n" + msg;
-                        if (preMsg.equals(msg)) { // 直接回车
+                        if (preMsg.equals(msg)) {
                             byte[] bytes = msg.getBytes();
                             ByteBuffer byteBuffer = ByteBuffer.wrap(bytes, 0, bytes.length);
                             synchronized (this) {
                                 session.getBasicRemote().sendBinary(byteBuffer);
                             }
                             continue;
-                        } else if (msg.equals(preMsg + dataToDst.toString())) { // 命令执行，ignore第一行
+                        } else if (msg.equals(preMsg + dataToDst.toString())) {
                             continue;
                         }
 
@@ -98,7 +99,6 @@ public class WebSshHandler {
                         }
 
                         preMsg = msg;
-                        System.out.println("<<" + msg + ">>");
                         byte[] bytes = msg.getBytes();
                         ByteBuffer byteBuffer = ByteBuffer.wrap(bytes, 0, bytes.length);
                         synchronized (this) {
@@ -155,13 +155,13 @@ public class WebSshHandler {
             outputStream.flush();
 
             if (!"\r\n".equals(str) && !"\r".equals(str)) {
-                System.out.println("[[" + str + "]]");
+                LOG.debug("data=" + str);
                 ByteBuffer byteBuffer = ByteBuffer.wrap(bytes, 0, bytes.length);
                 synchronized (this) {
                     session.getBasicRemote().sendBinary(byteBuffer);
                 }
             }
-            System.out.println("dataToDst = " + dataToDst);
+            LOG.debug("data sent, message=" + dataToDst.toString());
             return;
         }
     }
