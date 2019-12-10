@@ -36,7 +36,7 @@ public class WebSshHandler {
 
     private Session session;
 
-    private StringBuilder dataToDst = new StringBuilder();
+    private StringBuilder queue = new StringBuilder();
 
     private static JSch jsch = new JSch();
 
@@ -51,7 +51,7 @@ public class WebSshHandler {
     private Thread thread;
 
     @OnOpen
-    public void onOpen(final Session session, @PathParam("id") Long id) throws JSchException, IOException, EncodeException, InterruptedException {
+    public void onOpen(final Session session, @PathParam("id") Long id) throws JSchException, IOException, InterruptedException {
         this.session = session;
         LOG.info("session open, id=" + id + ", properties=" + session.getUserProperties());
         webSocketSet.add(this);
@@ -90,7 +90,7 @@ public class WebSshHandler {
                                 session.getBasicRemote().sendBinary(byteBuffer);
                             }
                             continue;
-                        } else if (msg.equals(preMsg + dataToDst.toString())) {
+                        } else if (msg.equals(preMsg + queue.toString())) {
                             continue;
                         }
 
@@ -105,7 +105,7 @@ public class WebSshHandler {
                             session.getBasicRemote().sendBinary(byteBuffer);
                         }
 
-                        dataToDst = new StringBuilder();
+                        queue = new StringBuilder();
                     }
                 } catch (Exception e) {
                     LOG.error("communication error", e);
@@ -132,36 +132,34 @@ public class WebSshHandler {
     }
 
     @OnMessage
-    public void onMessage(String message, Session session) throws IOException, JSchException {
-        LOG.debug("message received, message=" + message);
+    public void onMessage(String message, Session session) throws IOException {
         JsonNode node = WebSSHUtil.strToJsonObject(message);
-
         if (node.has("resize")) {
+            LOG.debug("resize command received");
             return;
         }
-
         if (node.has("data")) {
-            String str = node.get("data").asText();
-            if ("\r".equals(str)) {
-                if (dataToDst.length() > 0) {
-                    str = "\r\n";
+            String command = node.get("data").asText();
+            LOG.debug("data command received, command= " + command);
+            if ("\r".equals(command)) {
+                if (queue.length() > 0) {
+                    command = "\r\n";
                 }
             } else {
-                dataToDst.append(str);
+                queue.append(command);
             }
 
-            byte[] bytes = str.getBytes();
+            byte[] bytes = command.getBytes();
             outputStream.write(bytes);
             outputStream.flush();
 
-            if (!"\r\n".equals(str) && !"\r".equals(str)) {
-                LOG.debug("data=" + str);
+            if (!"\r\n".equals(command) && !"\r".equals(command)) {
+                LOG.debug("data=" + command);
                 ByteBuffer byteBuffer = ByteBuffer.wrap(bytes, 0, bytes.length);
                 synchronized (this) {
                     session.getBasicRemote().sendBinary(byteBuffer);
                 }
             }
-            LOG.debug("data sent, message=" + dataToDst.toString());
             return;
         }
     }
