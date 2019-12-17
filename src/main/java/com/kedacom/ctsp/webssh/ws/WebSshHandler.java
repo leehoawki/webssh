@@ -81,7 +81,7 @@ public class WebSshHandler {
                     String msg = "";
                     String preMsg = "";
                     while ((msg = bufferedReader.readLine()) != null) {
-                        LOG.debug("message received, line=" + msg);
+                        LOG.info("terminal message received, line=" + msg);
                         msg = "\r\n" + msg;
                         if (preMsg.equals(msg)) {
                             byte[] bytes = msg.getBytes();
@@ -140,7 +140,7 @@ public class WebSshHandler {
         }
         if (node.has("data")) {
             String command = node.get("data").asText();
-            LOG.debug("data command received, command= " + command);
+            LOG.info("data command received, command=" + command);
             if ("\r".equals(command)) {
                 if (queue.length() > 0) {
                     command = "\r\n";
@@ -153,8 +153,7 @@ public class WebSshHandler {
             outputStream.write(bytes);
             outputStream.flush();
 
-            if (!"\r\n".equals(command) && !"\r".equals(command)) {
-                LOG.debug("data=" + command);
+            if (!"\r\n".equals(command) && !"\r".equals(command) && !command.startsWith("\033") && !command.startsWith("\t")) {
                 ByteBuffer byteBuffer = ByteBuffer.wrap(bytes, 0, bytes.length);
                 synchronized (this) {
                     session.getBasicRemote().sendBinary(byteBuffer);
