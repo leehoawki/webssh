@@ -36,8 +36,6 @@ public class WebSshHandler {
 
     private Session session;
 
-    private StringBuilder queue = new StringBuilder();
-
     private static JSch jsch = new JSch();
 
     private com.jcraft.jsch.Session jschSession;
@@ -62,7 +60,6 @@ public class WebSshHandler {
 
         jschSession = jsch.getSession(hostLoginInfo.getUsername(), hostLoginInfo.getHostname(), hostLoginInfo.getPort());
         jschSession.setPassword(hostLoginInfo.getPassword());
-
         java.util.Properties config = new java.util.Properties();
         config.put("StrictHostKeyChecking", "no");
         jschSession.setConfig(config);
@@ -78,34 +75,17 @@ public class WebSshHandler {
             public void run() {
                 try {
                     BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-                    String msg = "";
-                    String preMsg = "";
-                    while ((msg = bufferedReader.readLine()) != null) {
+                    int BUF_SIZE = 32 * 1024;
+                    char[] chars = new char[BUF_SIZE];
+                    int count = 0;
+                    while ((count = bufferedReader.read(chars, 0, BUF_SIZE)) > 0) {
+                        String msg = String.valueOf(chars, 0 ,count);
                         LOG.info("terminal message received, line=" + msg);
-                        msg = "\r\n" + msg;
-                        if (preMsg.equals(msg)) {
-                            byte[] bytes = msg.getBytes();
-                            ByteBuffer byteBuffer = ByteBuffer.wrap(bytes, 0, bytes.length);
-                            synchronized (this) {
-                                session.getBasicRemote().sendBinary(byteBuffer);
-                            }
-                            continue;
-                        } else if (msg.equals(preMsg + queue.toString())) {
-                            continue;
-                        }
-
-                        if ("".equals(msg) || "\r\n".equals(msg)) {
-                            continue;
-                        }
-
-                        preMsg = msg;
                         byte[] bytes = msg.getBytes();
                         ByteBuffer byteBuffer = ByteBuffer.wrap(bytes, 0, bytes.length);
                         synchronized (this) {
                             session.getBasicRemote().sendBinary(byteBuffer);
                         }
-
-                        queue = new StringBuilder();
                     }
                 } catch (Exception e) {
                     LOG.error("communication error", e);
@@ -113,9 +93,6 @@ public class WebSshHandler {
             }
         };
         thread.start();
-
-        Thread.sleep(100);
-        this.onMessage("{\"data\":\"\\r\"}", this.session);
     }
 
     @OnClose
@@ -141,24 +118,10 @@ public class WebSshHandler {
         if (node.has("data")) {
             String command = node.get("data").asText();
             LOG.info("data command received, command=" + command);
-            if ("\r".equals(command)) {
-                if (queue.length() > 0) {
-                    command = "\r\n";
-                }
-            } else {
-                queue.append(command);
-            }
 
             byte[] bytes = command.getBytes();
             outputStream.write(bytes);
             outputStream.flush();
-
-            if (!"\r\n".equals(command) && !"\r".equals(command) && !command.startsWith("\033") && !command.startsWith("\t")) {
-                ByteBuffer byteBuffer = ByteBuffer.wrap(bytes, 0, bytes.length);
-                synchronized (this) {
-                    session.getBasicRemote().sendBinary(byteBuffer);
-                }
-            }
             return;
         }
     }
