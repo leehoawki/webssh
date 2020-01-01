@@ -54,8 +54,8 @@ jQuery(function($){
       state = DISCONNECTED,
       messages = {1: 'This client is connecting ...', 2: 'This client is already connnected.'},
       key_max_size = 16384,
-      fields = ['hostname', 'port', 'username'],
-      form_keys = fields.concat(['password', 'totp']),
+      fields = ['hostname'],
+      form_keys = fields,
       opts_keys = ['bgcolor', 'title', 'encoding', 'command', 'term'],
       url_form_data = {},
       url_opts_data = {},
@@ -91,7 +91,7 @@ jQuery(function($){
 
 
   function populate_form(data) {
-    var names = form_keys.concat(['passphrase']),
+    var names = form_keys,
         i, name;
 
     for (i=0; i < names.length; i++) {
@@ -115,17 +115,6 @@ jQuery(function($){
     return '';
   }
 
-
-  function decode_password(encoded) {
-    try {
-      return window.atob(encoded);
-    } catch (e) {
-       console.error(e);
-    }
-    return null;
-  }
-
-
   function parse_url_data(string, form_keys, opts_keys, form_map, opts_map) {
     var i, pair, key, val,
         arr = string.split('&');
@@ -140,10 +129,6 @@ jQuery(function($){
       } else if (opts_keys.indexOf(key) >=0) {
         opts_map[key] = val;
       }
-    }
-
-    if (form_map.password) {
-      form_map.password = decode_password(form_map.password);
     }
   }
 
@@ -560,7 +545,7 @@ jQuery(function($){
 
   function clean_data(data) {
     var i, attr, val;
-    var attrs = form_keys.concat(['privatekey', 'passphrase']);
+    var attrs = form_keys;
 
     for (i = 0; i < attrs.length; i++) {
       attr = attrs[i];
@@ -576,9 +561,6 @@ jQuery(function($){
     clean_data(data);
 
     var hostname = data.get('hostname'),
-        port = data.get('port'),
-        username = data.get('username'),
-        pk = data.get('privatekey'),
         result = {
           valid: false,
           data: data,
@@ -594,28 +576,9 @@ jQuery(function($){
       }
     }
 
-    if (!port) {
-      port = 22;
-    } else {
-      if (!(port > 0 && port < 65535)) {
-        errors.push('Invalid port: ' + port);
-      }
-    }
-
-    if (!username) {
-      errors.push('Value of username is required.');
-    }
-
-    if (pk) {
-      size = pk.size || pk.length;
-      if (size > key_max_size) {
-        errors.push('Invalid private key: ' + pk.name || '');
-      }
-    }
-
     if (!errors.length || debug) {
       result.valid = true;
-      result.title = username + '@' + hostname + ':'  + port;
+      result.title = hostname;
     }
     result.errors = errors;
 
@@ -706,7 +669,7 @@ jQuery(function($){
     }
 
     data.term = term_type.val();
-    data._xsrf = _xsrf.value;
+//    data._xsrf = _xsrf.value;
     if (event_origin) {
       data._origin = event_origin;
     }
@@ -725,7 +688,7 @@ jQuery(function($){
   }
 
 
-  function connect(hostname, port, username, password, privatekey, passphrase, totp) {
+  function connect(hostname) {
     // for console use
     var result, opts;
 
@@ -739,13 +702,7 @@ jQuery(function($){
     } else {
       if (typeof hostname === 'string') {
         opts = {
-          hostname: hostname,
-          port: port,
-          username: username,
-          password: password,
-          privatekey: privatekey,
-          passphrase: passphrase,
-          totp: totp
+          hostname: hostname
         };
       } else {
         opts = hostname;
@@ -824,16 +781,12 @@ jQuery(function($){
     term_type.val(url_opts_data.term);
   }
 
-  if (url_form_data.password === null) {
-    log_status('Password via url must be encoded in base64.');
+  if (get_object_length(url_form_data)) {
+    waiter.show();
+    connect(url_form_data);
   } else {
-    if (get_object_length(url_form_data)) {
-      waiter.show();
-      connect(url_form_data);
-    } else {
-      restore_items(fields);
-      form_container.show();
-    }
+    restore_items(fields);
+    form_container.show();
   }
 
 });

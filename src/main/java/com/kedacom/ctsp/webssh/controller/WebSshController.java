@@ -2,8 +2,10 @@ package com.kedacom.ctsp.webssh.controller;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.kedacom.ctsp.webssh.WebSSHUtil;
+import com.kedacom.ctsp.webssh.hosts.HostRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -17,18 +19,17 @@ public class WebSshController {
 
     static final Logger LOG = LoggerFactory.getLogger(WebSshController.class);
 
+    @Autowired
+    HostRepository repository;
+
     @RequestMapping(value = "/", method = RequestMethod.POST)
     @ResponseBody
-    public ObjectNode connect(String hostname, Integer port, String username, String password, MultipartFile privatekey) {
+    public ObjectNode connect(String hostname) {
+        LOG.info("connecting..., hostname=" + hostname);
         WebSshHandler.websocketSessionId.increment();
         long wsId = WebSshHandler.websocketSessionId.longValue();
 
-        HostLoginInfo hostLoginInfo = new HostLoginInfo()
-                .setHostname(hostname)
-                .setUsername(username)
-                .setPassword(password)
-                .setPort(port)
-                .setPrivatekey(privatekey);
+        HostLoginInfo hostLoginInfo = repository.getHost(hostname);
         WebSshHandler.hostLoginInfoMap.put(wsId, hostLoginInfo);
 
         ObjectNode node = WebSSHUtil.createObjectNode();
@@ -36,5 +37,10 @@ public class WebSshController {
         node.put("id", wsId);
         node.put("encoding", "utf-8");
         return node;
+    }
+
+    @RequestMapping(value = "/", method = RequestMethod.GET)
+    public String index(String id) {
+        return "index.html";
     }
 }
