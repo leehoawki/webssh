@@ -80,7 +80,7 @@ public class WebSshHandler {
                     int count = 0;
                     while ((count = bufferedReader.read(chars, 0, BUF_SIZE)) > 0) {
                         String msg = String.valueOf(chars, 0 ,count);
-                        LOG.info("terminal message received, line=" + msg);
+                        LOG.debug("terminal message received, line=" + msg);
                         byte[] bytes = msg.getBytes();
                         ByteBuffer byteBuffer = ByteBuffer.wrap(bytes, 0, bytes.length);
                         synchronized (this) {
