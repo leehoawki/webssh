@@ -2,6 +2,7 @@ package com.kedacom.ctsp.webssh.ws;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.ChannelShell;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.kedacom.ctsp.webssh.WebSSHUtil;
@@ -62,9 +63,9 @@ public class WebSshHandler {
         jschSession.setPassword(hostLoginInfo.getPassword());
         java.util.Properties config = new java.util.Properties();
         config.put("StrictHostKeyChecking", "no");
+
         jschSession.setConfig(config);
         jschSession.connect();
-
         channel = jschSession.openChannel("shell");
         inputStream = channel.getInputStream();
         outputStream = channel.getOutputStream();
@@ -79,7 +80,7 @@ public class WebSshHandler {
                     char[] chars = new char[BUF_SIZE];
                     int count = 0;
                     while ((count = bufferedReader.read(chars, 0, BUF_SIZE)) > 0) {
-                        String msg = String.valueOf(chars, 0 ,count);
+                        String msg = String.valueOf(chars, 0, count);
                         LOG.debug("terminal message received, line=" + msg);
                         byte[] bytes = msg.getBytes();
                         ByteBuffer byteBuffer = ByteBuffer.wrap(bytes, 0, bytes.length);
@@ -112,7 +113,11 @@ public class WebSshHandler {
     public void onMessage(String message, Session session) throws IOException {
         JsonNode node = WebSSHUtil.strToJsonObject(message);
         if (node.has("resize")) {
-            LOG.debug("resize command received");
+            int col = node.get("resize").get(0).asInt();
+            int row = node.get("resize").get(1).asInt();
+            LOG.info("resize command received , col=" + col + ", row=" + row);
+            ChannelShell ch = (ChannelShell) channel;
+            ch.setPtySize(col, row, col * 8, row * 8);
             return;
         }
         if (node.has("data")) {
