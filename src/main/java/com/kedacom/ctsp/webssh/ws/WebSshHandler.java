@@ -70,6 +70,10 @@ public class WebSshHandler {
         inputStream = channel.getInputStream();
         outputStream = channel.getOutputStream();
         channel.connect();
+        outputStream.write("touch /tmp/webssh.log\n".getBytes());
+        outputStream.write("export HISTORY_FILE=/tmp/webssh.log\n".getBytes());
+        outputStream.write("export PROMPT_COMMAND='{ date \"+%Y-%m-%d %T ##### USER:$USER IP:$SSH_CLIENT PS:$SSH_TTY ppid=$PPID pwd=$PWD  #### $(history 1 | { read x cmd; echo \"$cmd\"; })\";} >>$HISTORY_FILE'\n".getBytes());
+        outputStream.flush();
 
         thread = new Thread() {
             @Override
